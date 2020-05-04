@@ -1,0 +1,5 @@
+[telegramconfig]
+SuperUserId = 111111111
+ChannelId = -222222222
+ApiKey = "3333333333:aaaaaaaaaaaaaaaaaaaaa-bbb-cc-dddddd"
+ResultsAbsPath = "/var/www/htdocs/mysite/streamjury/"

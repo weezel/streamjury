@@ -1,4 +1,10 @@
 *.bak
 *.core
 *.idea
+*.log
 *.orig
+.vscode
+gameplay-*.html
+streamjury
+streamjury.toml
+streamjury_obsd

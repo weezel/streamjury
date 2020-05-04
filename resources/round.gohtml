@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Levyraati 666</title>
+</head>
+<body>
+    <h1>Here comes the fuckin' sun</h1>
+    <pre>
+    {{ range .Players }}
+        {{ .Name }} - {{ .Song.Url }}
+        {{ .Song.Description }}
+        # Reviews:
+        {{ range .ReceivedReviews }}
+            {{ .FromPlayer }} {{ .Rating }}/10: {{ .UserReview }}
+        {{ end }}
+    {{ end }}
+    </pre>
+</body>
+</html>
