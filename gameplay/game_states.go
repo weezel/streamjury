@@ -1,12 +1,12 @@
 package gameplay
 
 const (
-	InitState         = iota
-	WaitingForPlayers = iota
-	WaitingForSongs   = iota
-	PublishingSong    = iota
-	WaitingForReviews = iota
-	StopGame          = iota
+	InitState         = iota // 0
+	WaitingForPlayers = iota // 1
+	WaitingForSongs   = iota // 2
+	PublishingSong    = iota // 3
+	WaitingForReviews = iota // 4
+	StopGame          = iota // 5
 )
 
 func NextGameState(gameState *int) {

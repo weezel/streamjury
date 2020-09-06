@@ -62,9 +62,9 @@ func ConnectionHandler() {
 		if !game.StartedAt.IsZero() {
 			timedOut, timeInIdle := game.HasIdleTimedOut()
 			if timedOut {
-				log.Printf("Timeout reached: %v", timeInIdle)
+				log.Printf("Timeout reached: %+v", timeInIdle)
 			} else {
-				log.Printf("Currently idled: %v / %v", timeInIdle,
+				log.Printf("Currently idled: %+v / %+v", timeInIdle,
 					gameplay.GameIdleTimeout)
 			}
 		}
@@ -129,14 +129,16 @@ func ConnectionHandler() {
 			if game.IsInGame(player.Uid) {
 				replyMsg = "Olet jo mukana pelissä ;)"
 				outMsg = tgbotapi.NewMessage(channelId, replyMsg)
-				bot.Send(outMsg)
+				if _, err = bot.Send(outMsg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 				log.Printf("%s(%d) is already joined\n",
 					player.Name,
 					player.Uid)
 			} else {
 				// Game starter has super powers
 				if len(game.Players) == 0 {
-					game.GameStarterUid = player.Uid
+					game.GameStarterUID = player.Uid
 					replyMsg = fmt.Sprintf("%s haluaa aloittaa levyraadin, "+
 						"odotetaan muita pelaajia. "+
 						"Liity peliin kirjoittamalla: levyraati aloita. "+
@@ -144,12 +146,16 @@ func ConnectionHandler() {
 						"käskijä voi käynnistää pelin kirjoittamalla 'levyraati jatka'.",
 						player.Name)
 					outMsg = tgbotapi.NewMessage(channelId, replyMsg)
-					bot.Send(outMsg)
+					if _, err = bot.Send(outMsg); err != nil {
+						log.Printf("ERROR: %+v", err)
+					}
 				} else {
 					replyMsg = fmt.Sprintf("Pelaaja %s liittyi peliin!",
 						player.Name)
 					outMsg = tgbotapi.NewMessage(channelId, replyMsg)
-					bot.Send(outMsg)
+					if _, err = bot.Send(outMsg); err != nil {
+						log.Printf("ERROR: %+v", err)
+					}
 
 					// Show joined players
 					joinedPlayers := func() []string {
@@ -162,11 +168,13 @@ func ConnectionHandler() {
 					replyMsg = fmt.Sprintf("Tähän mennessä liittyneet: %s",
 						strings.Join(joinedPlayers(), ", "))
 					outMsg = tgbotapi.NewMessage(channelId, replyMsg)
-					bot.Send(outMsg)
+					if _, err = bot.Send(outMsg); err != nil {
+						log.Printf("ERROR: %+v", err)
+					}
 				}
 				game.AppendPlayer(player)
 				log.Printf("Player %s(%d) joined", player.Name, player.Uid)
-				log.Printf("Joined players: %v\n", game.Players)
+				log.Printf("Joined players: %+v\n", game.Players)
 			}
 
 			if game.StartedAt.IsZero() {
@@ -174,11 +182,11 @@ func ConnectionHandler() {
 			}
 
 			curGameState = gameplay.WaitingForPlayers
-			log.Printf("State: %v\n", curGameState)
+			log.Printf("State: %+v\n", curGameState)
 		case "lopeta":
 			var replyMsg string
 
-			if player.Uid == game.GameStarterUid ||
+			if player.Uid == game.GameStarterUID ||
 				player.Uid == superUserId {
 				if curGameState > 0 {
 					replyMsg = "Kierros lopetettu"
@@ -192,19 +200,23 @@ func ConnectionHandler() {
 					player.Uid)
 				outMsg := tgbotapi.NewMessage(channelId,
 					"Et ole pelin aloittaja, joten teikäläisen natsat ei riitä")
-				bot.Send(outMsg)
+				if _, err = bot.Send(outMsg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 				continue
 			}
 
 			outMsg := tgbotapi.NewMessage(channelId, replyMsg)
-			bot.Send(outMsg)
+			if _, err = bot.Send(outMsg); err != nil {
+				log.Printf("ERROR: %+v", err)
+			}
 
 			_, timeInIdle := game.HasIdleTimedOut()
-			log.Printf("Gameplay stopped. Idle time was %v\n",
+			log.Printf("Gameplay stopped. Idle time was %+v\n",
 				timeInIdle)
 			game.Reset()
 			curGameState = gameplay.InitState
-			log.Printf("State: %v\n", curGameState)
+			log.Printf("State: %+v\n", curGameState)
 		case "jatka":
 			var replyMsg string
 
@@ -221,11 +233,13 @@ func ConnectionHandler() {
 					player.Uid)
 				msg := tgbotapi.NewMessage(channelId,
 					replyMsg)
-				bot.Send(msg)
+				if _, err := bot.Send(msg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 				break
 			}
 
-			if player.Uid == game.GameStarterUid ||
+			if player.Uid == game.GameStarterUID ||
 				player.Uid == superUserId {
 				replyMsg = "Jatketaan..."
 				gameplay.NextGameState(&curGameState)
@@ -235,8 +249,10 @@ func ConnectionHandler() {
 			}
 
 			outMsg := tgbotapi.NewMessage(channelId, replyMsg)
-			bot.Send(outMsg)
-			log.Printf("State: %v\n", curGameState)
+			if _, err = bot.Send(outMsg); err != nil {
+				log.Printf("ERROR: %+v", err)
+			}
+			log.Printf("State: %+v\n", curGameState)
 		case "arvio", "arvioi", "arvostele":
 			var replyMsg string
 
@@ -252,7 +268,9 @@ func ConnectionHandler() {
 					errMsg := tgbotapi.NewMessage(
 						update.Message.Chat.ID,
 						err.Error())
-					bot.Send(errMsg)
+					if _, err = bot.Send(errMsg); err != nil {
+						log.Printf("ERROR: %+v", err)
+					}
 					continue
 				}
 				for i := range game.Players {
@@ -274,14 +292,16 @@ func ConnectionHandler() {
 			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
 				replyMsg)
-			bot.Send(msg)
+			if _, err = bot.Send(msg); err != nil {
+				log.Printf("ERROR: %+v", err)
+			}
 
 			if game.AllReviewsGiven() {
 				curGameState = gameplay.PublishingSong
 				log.Print("All reviews given")
 			}
 
-			log.Printf("State: %v\n", curGameState)
+			log.Printf("State: %+v\n", curGameState)
 		case "esitä", "esitys":
 			curGameState = gameplay.WaitingForSongs
 			var replyMsg string
@@ -293,7 +313,9 @@ func ConnectionHandler() {
 				replyMsg = "VIRHE: Viimeisenä ei ollut linkkiä"
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
 					replyMsg)
-				bot.Send(msg)
+				if _, err = bot.Send(msg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 				continue
 			}
 
@@ -341,7 +363,7 @@ func ConnectionHandler() {
 						p.Name,
 						songUrl.String(),
 						description)
-					log.Printf("%v\n", game.Players)
+					log.Printf("%+v\n", game.Players)
 					break
 				}
 			}
@@ -359,22 +381,30 @@ func ConnectionHandler() {
 				curGameState = gameplay.PublishingSong
 				replyMsg = gameplay.GetGameStateIntro(curGameState)
 				msg := tgbotapi.NewMessage(channelId, replyMsg)
-				bot.Send(msg)
+				if _, err = bot.Send(msg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 			} else {
 				privMsg := tgbotapi.NewMessage(update.Message.Chat.ID,
 					fmt.Sprintf("Kiitos kappaleesta %s", player.Name))
 				chanReply := tgbotapi.NewMessage(channelId,
 					fmt.Sprintf("%s lähetti kappaleen", player.Name))
 
-				bot.Send(privMsg)
-				bot.Send(chanReply)
+				if _, err = bot.Send(privMsg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
+				if _, err = bot.Send(chanReply); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 			}
 
-			log.Printf("State: %v\n", curGameState)
+			log.Printf("State: %+v\n", curGameState)
 		default:
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
 				"Parametri uupuu, pitää olla jokin näistä: [aloita|arvio tai arvioi tai arvostele|esitä tai esitys|lopeta]")
-			bot.Send(msg)
+			if _, err = bot.Send(msg); err != nil {
+				log.Printf("ERROR: %+v", err)
+			}
 		}
 
 		switch curGameState {
@@ -403,15 +433,20 @@ func ConnectionHandler() {
 				curSongFrom.ReviewGiven = true
 				curGameState = gameplay.WaitingForReviews
 				infoMsg := tgbotapi.NewMessage(channelId, "Odotetaan arvioita. Arvioi kappale näin: levyraati arvioi selitys-tähän 10/10")
-				bot.Send(infoMsg)
+				if _, err = bot.Send(infoMsg); err != nil {
+					log.Printf("ERROR: %+v", err)
+				}
 			}
 			msg := tgbotapi.NewMessage(channelId, replyMsg)
-			bot.Send(msg)
-			log.Printf("State: %v\n", curGameState)
+			if _, err = bot.Send(msg); err != nil {
+				log.Printf("ERROR: %+v", err)
+			}
+			log.Printf("State: %+v\n", curGameState)
 		}
 
 		if curGameState == gameplay.StopGame {
 			if allSongsPresented {
+				log.Print("Starting to release results")
 				dateTimeNow := time.Now().Format("2006-01-02_150405")
 				reviewsFilename := fmt.Sprintf("gameplay-%s.html", dateTimeNow)
 				reviewsFullPath := filepath.Join(resultsAbsPath, reviewsFilename)
@@ -422,11 +457,11 @@ func ConnectionHandler() {
 					stringWriter.Bytes(),
 					0644)
 				check(err)
-				log.Printf("Game written to file %s", reviewsFullPath)
+				log.Printf("Results written to file %s", reviewsFullPath)
 				allSongsPresented = false
 			}
 			game.Reset()
-			log.Printf("After reset: %v", game)
+			log.Printf("After reset: %+v", game)
 			curGameState = gameplay.InitState
 		}
 	} // for update

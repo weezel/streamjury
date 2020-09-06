@@ -53,7 +53,7 @@ func main() {
 		os.O_RDWR|os.O_CREATE|os.O_APPEND,
 		0666)
 	if err != nil {
-		fmt.Printf("Error opening file %v\n", err)
+		fmt.Printf("Error opening file %+v\n", err)
 		os.Exit(1)
 	}
 	defer f.Close()

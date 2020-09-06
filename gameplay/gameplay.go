@@ -15,7 +15,7 @@ const (
 type GamePlay struct {
 	// TODO won't be needed sync.Mutex
 	StartedAt        time.Time
-	GameStarterUid   int
+	GameStarterUID   int
 	CurrentPresenter *Player
 	Players          []Player
 }
