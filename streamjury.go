@@ -34,7 +34,9 @@ func main() {
 		log.Fatal(err)
 	}
 	binDir := path.Dir(ex)
-	os.Chdir(binDir)
+	if err := os.Chdir(binDir); err != nil {
+		log.Panicf("Failed to change directory %s", ex)
+	}
 	fmt.Printf("Program directory is %s\n", binDir)
 
 	if len(os.Args) < 2 {
@@ -56,7 +58,11 @@ func main() {
 		fmt.Printf("Error opening file %+v\n", err)
 		os.Exit(1)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Panicf("Couldn't close file handle: %s", err)
+		}
+	}()
 	log.SetOutput(f)
 
 	filedata, err := ioutil.ReadFile(os.Args[1])
