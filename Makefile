@@ -9,8 +9,11 @@ GOARCH		= amd64
 .PHONY: all analysis obsd test
 
 # Defaults Linux
-all:
+all: linst
 	CGO_ENABLED=0 $(GO) build $(LDFLAGS)
+lint:
+	gosec ./...
+	go vet ./...
 debug:
 	CGO_ENABLED=1 $(GO) build $(LDFLAGS)
 obsd:
