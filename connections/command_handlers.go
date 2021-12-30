@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type BotIF interface {
@@ -81,41 +81,39 @@ func handleBegin(bot BotIF, player *gameplay.Player) gameplay.GameState {
 	return gameplay.WaitingForPlayers
 }
 
-func handleStop(bot *tgbotapi.BotAPI, player *gameplay.Player, curGameState gameplay.GameState) gameplay.GameState {
-	var replyMsg string
+func handleStop(
+	bot *tgbotapi.BotAPI,
+	player *gameplay.Player,
+	curGameState gameplay.GameState,
+) gameplay.GameState {
 	var err error
 
 	if player.Uid == game.GameStarterUID ||
 		player.Uid == superUserId {
 		if curGameState > 0 {
-			replyMsg = "Kierros lopetettu"
+			outMsg := tgbotapi.NewMessage(channelId, "Kierros lopetettu")
+			if _, err = bot.Send(outMsg); err != nil {
+				log.Printf("ERROR (handleStop1): %+v", err)
+			}
+			return gameplay.StopGame
 		} else {
-			replyMsg = "Ei peliä käynnissä"
+			outMsg := tgbotapi.NewMessage(channelId, "Ei peliä käynnissä")
+			if _, err = bot.Send(outMsg); err != nil {
+				log.Printf("ERROR (handleStop2): %+v", err)
+			}
+			return gameplay.InitState
 		}
-		return gameplay.StopGame
-	} else {
-		log.Printf("Player %s(%d) tried to stop the game, ignored",
-			player.Name,
-			player.Uid)
-		outMsg := tgbotapi.NewMessage(channelId,
-			"Et ole pelin aloittaja, joten teikäläisen natsat ei riitä")
-		if _, err = bot.Send(outMsg); err != nil {
-			log.Printf("ERROR (handleStop1): %+v", err)
-		}
-		return curGameState
 	}
 
-	outMsg := tgbotapi.NewMessage(channelId, replyMsg)
+	log.Printf("Player %s(%d) tried to stop the game, ignored",
+		player.Name,
+		player.Uid)
+	outMsg := tgbotapi.NewMessage(channelId,
+		"Et ole pelin aloittaja, joten teikäläisen natsat ei riitä")
 	if _, err = bot.Send(outMsg); err != nil {
-		log.Printf("ERROR (handleStop2): %+v", err)
+		log.Printf("ERROR (handleStop3): %+v", err)
 	}
-
-	_, timeInIdle := game.HasIdleTimedOut()
-	log.Printf("Gameplay stopped. Idle time was %+v\n",
-		timeInIdle)
-	game.Reset()
-
-	return gameplay.InitState
+	return curGameState
 }
 
 func handleContinue(
@@ -160,6 +158,35 @@ func handleContinue(
 	}
 
 	return curGameState
+}
+
+func handlePublishing(bot *tgbotapi.BotAPI) (gameplay.GameState, string) {
+	var replyMsg string
+	var err error
+
+	curSongFrom = game.NextSongFrom()
+	if curSongFrom == nil {
+		replyMsg = "Kaikki Muumit ovat esittäneet kappaleet. Peli loppuu ja muumitalo lukitaan"
+		return gameplay.StopGame, replyMsg
+	}
+
+	for i := range game.Players {
+		game.Players[i].ReviewGiven = false
+	}
+
+	infoMsg := tgbotapi.NewMessage(
+		channelId,
+		"Odotetaan arvioita. Arvioi kappale näin: levyraati arvioi selitys-tähän 10/10")
+	if _, err = bot.Send(infoMsg); err != nil {
+		log.Printf("ERROR: %+v", err)
+	}
+
+	replyMsg = fmt.Sprintf("Seuraava kappale tulee käyttäjältä %s. Linkki kappaleeseen %s ja kuvaus: %s",
+		curSongFrom.Name,
+		curSongFrom.Song.Url,
+		curSongFrom.Song.Description)
+
+	return gameplay.WaitingForReviews, replyMsg
 }
 
 func handleReview(
@@ -219,15 +246,13 @@ func handleReview(
 	return curGameState
 }
 
-func handlePresent(
+func handleSubmittedSong(
 	bot *tgbotapi.BotAPI,
 	player *gameplay.Player,
-	chatId int64,
+	chatID int64,
 	curGameState gameplay.GameState,
 	review []string,
-	origMsg string,
 ) gameplay.GameState {
-	curGameState = gameplay.WaitingForSongs
 	var replyMsg string
 
 	// Get song
@@ -235,7 +260,7 @@ func handlePresent(
 	songUrl, err := url.Parse(possibleUrl)
 	if err != nil {
 		replyMsg = "VIRHE: Viimeisenä ei ollut linkkiä"
-		msg := tgbotapi.NewMessage(chatId, replyMsg)
+		msg := tgbotapi.NewMessage(chatID, replyMsg)
 		if _, err = bot.Send(msg); err != nil {
 			log.Printf("ERROR (handlePresent1): %+v", err)
 		}
@@ -243,7 +268,128 @@ func handlePresent(
 	}
 
 	// Get song description
-	// description := strings.Join(splitted[2:len(splitted)-1], " ")
+	description := getSongDescription(review)
+
+	var playerFound bool = false
+	var i int
+	var p gameplay.Player
+	for range game.Players {
+		// Correct player found
+		if player.Uid == p.Uid {
+			playerFound = true
+			break
+		}
+		i++
+		if i < len(game.Players) {
+			p = game.Players[i]
+		}
+	}
+	if playerFound == false {
+		// TODO
+		return curGameState
+	}
+
+	// Song already submitted, bail out
+	if p.Song != nil {
+		log.Printf("Player %s tried to send a new song: %s\n",
+			p.Name, songUrl.String())
+		replyMsg = fmt.Sprintf("Olet jo lähettänyt kappaleen: %s",
+			p.Song.Url)
+		msg := tgbotapi.NewMessage(chatID, replyMsg)
+		if _, err = bot.Send(msg); err != nil {
+			log.Printf("ERROR (handlePresent1): %+v", err)
+		}
+		return curGameState
+	}
+
+	game.Players[i].SongSubmitted = true
+	game.Players[i].AddSong(description, songUrl.String())
+	log.Printf("Player %s added song %s with description: %s\n",
+		p.Name,
+		songUrl.String(),
+		description)
+	log.Printf("%+v\n", game.Players)
+
+	// Don't go to next state until all players have submitted
+	// their songs
+	var allPlayersSubmittedSong bool = true
+	for _, pp := range game.Players {
+		if pp.SongSubmitted == false {
+			allPlayersSubmittedSong = false
+			break
+		}
+	}
+	if allPlayersSubmittedSong {
+		replyMsg = gameplay.GetGameStateIntro(curGameState)
+		if replyMsg != "" {
+			msg := tgbotapi.NewMessage(channelId, replyMsg)
+			if _, err = bot.Send(msg); err != nil {
+				log.Printf("ERROR (handlePresent2): %+v", err)
+			}
+		}
+		// Ready to announce a new song!
+		return gameplay.PublishingSong
+	}
+
+	privMsg := tgbotapi.NewMessage(chatID,
+		fmt.Sprintf("Kiitos kappaleesta %s", player.Name))
+	chanReply := tgbotapi.NewMessage(channelId,
+		fmt.Sprintf("%s lähetti kappaleen", player.Name))
+
+	if _, err = bot.Send(privMsg); err != nil {
+		log.Printf("ERROR (handlePresent3): %+v", err)
+	}
+	if _, err = bot.Send(chanReply); err != nil {
+		log.Printf("ERROR (handlePresent4): %+v", err)
+	}
+
+	return curGameState
+}
+
+func handlePublishResults(gamePlay gameplay.GamePlay) {
+	if allSongsPresented == false {
+		return
+	}
+
+	log.Print("Publishing the results")
+	resultsInJSON, err := json.Marshal(game)
+	if err != nil {
+		log.Printf("JSON marshalling failed: %v", err)
+	} else {
+		log.Printf("Results in JSON: %s\n", resultsInJSON)
+	}
+	dateTimeNow := time.Now().Format("2006-01-02_150405")
+	reviewsFilename := fmt.Sprintf("gameplay-%s.html", dateTimeNow)
+	reviewsFullPath := filepath.Join(resultsAbsPath, reviewsFilename)
+	htmlData := game.PublishResults()
+	err = ioutil.WriteFile(
+		reviewsFullPath,
+		htmlData,
+		0644)
+	check(err)
+	log.Printf("Results written to file %s", reviewsFullPath)
+}
+
+func handleQuit(gamePlay gameplay.GamePlay) gameplay.GameState {
+	game.Reset()
+	log.Printf("Game finished: %+v", game)
+
+	return gameplay.InitState
+}
+
+func getSongDescription(message []string) string {
+	// idx	item
+	// 0	levyraati
+	// 1	command
+	// 2	command params
+	// ...
+	// n	song's URL
+	desc := message[2 : len(message)-1]
+	return strings.Join(desc, " ")
+}
+
+// XXX Retain this for a bit. Not sure why I did like this way.
+func getSongDescription2(origMsg string) (string, error) {
 	thirdSpace := func(msg string, cmp rune, nThMatch int) int {
 		spaceCount := 0
 		for i, r := range origMsg {
@@ -263,92 +409,8 @@ func handlePresent(
 			startIdx,
 			endIdx,
 			origMsg)
-		return curGameState
-	}
-	description := origMsg[startIdx+1 : endIdx]
-
-	for i, p := range game.Players {
-		// Continue until the submitter is found
-		if player.Uid != p.Uid {
-			continue
-		}
-
-		if game.Players[i].Song != nil {
-			replyMsg = fmt.Sprintf("Olet jo lähettänyt kappaleen: %s",
-				game.Players[i].Song.Url)
-			log.Printf("Player %s tried to send a new song: %s\n",
-				player.Name, songUrl.String())
-			continue
-		} else {
-			game.Players[i].AddSong(description, songUrl.String())
-			game.Players[i].SongSubmitted = true
-			log.Printf("Player %s added song %s with description: %s\n",
-				p.Name,
-				songUrl.String(),
-				description)
-			log.Printf("%+v\n", game.Players)
-			break
-		}
+		return "", fmt.Errorf("couldn't parse song description")
 	}
 
-	// Don't go to next state until all players have submitted
-	// their song
-	var allPlayersSubmittedSong bool = true
-	for _, p := range game.Players {
-		if p.SongSubmitted == false {
-			allPlayersSubmittedSong = false
-			break
-		}
-	}
-	if allPlayersSubmittedSong {
-		curGameState = gameplay.PublishingSong
-		replyMsg = gameplay.GetGameStateIntro(curGameState)
-		if replyMsg != "" {
-			msg := tgbotapi.NewMessage(channelId, replyMsg)
-			if _, err = bot.Send(msg); err != nil {
-				log.Printf("ERROR (handlePresent2): %+v", err)
-			}
-		}
-	} else {
-		privMsg := tgbotapi.NewMessage(chatId,
-			fmt.Sprintf("Kiitos kappaleesta %s", player.Name))
-		chanReply := tgbotapi.NewMessage(channelId,
-			fmt.Sprintf("%s lähetti kappaleen", player.Name))
-
-		if _, err = bot.Send(privMsg); err != nil {
-			log.Printf("ERROR (handlePresent3): %+v", err)
-		}
-		if _, err = bot.Send(chanReply); err != nil {
-			log.Printf("ERROR (handlePresent4): %+v", err)
-		}
-	}
-
-	return curGameState
-}
-
-func handleQuit(gamePlay gameplay.GamePlay) gameplay.GameState {
-	if allSongsPresented {
-		log.Print("Publishing end results")
-		resultsInJSON, err := json.Marshal(game)
-		if err != nil {
-			log.Printf("JSON marshalling failed: %v", err)
-		} else {
-			log.Printf("Results in JSON: %s\n", resultsInJSON)
-		}
-		dateTimeNow := time.Now().Format("2006-01-02_150405")
-		reviewsFilename := fmt.Sprintf("gameplay-%s.html", dateTimeNow)
-		reviewsFullPath := filepath.Join(resultsAbsPath, reviewsFilename)
-		htmlData := game.PublishResults()
-		err = ioutil.WriteFile(
-			reviewsFullPath,
-			htmlData,
-			0644)
-		check(err)
-		log.Printf("Results written to file %s", reviewsFullPath)
-		allSongsPresented = false
-	}
-	game.Reset()
-	log.Printf("Game finished: %+v", game)
-
-	return gameplay.InitState
+	return origMsg[startIdx+1 : endIdx], nil
 }
