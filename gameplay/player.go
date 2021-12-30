@@ -9,27 +9,27 @@ import (
 )
 
 type Player struct {
-	Name            string
-	Uid             int
-	ReviewGiven     bool
-	SongSubmitted   bool
-	SongPresented   bool
+	Name            string `json:"name"`
+	Uid             int64  `json:"uid"`
+	ReviewGiven     bool   `json:"review_given"`
+	SongSubmitted   bool   `json:"song_ubmited"`
+	SongPresented   bool   `json:"song_presented"`
 	Song            *Song
 	ReceivedReviews []Review
 }
 
 type Song struct {
-	Description string
-	Url         string
+	Description string `json:"description"`
+	Url         string `json:"url"`
 }
 
 type Review struct {
-	Rating     int
-	FromPlayer string
-	UserReview string
+	Rating     int    `json:"rating"`
+	FromPlayer string `json:"from_player"`
+	UserReview string `json:"user_review"`
 }
 
-func AddPlayer(name string, uid int) *Player {
+func AddPlayer(name string, uid int64) *Player {
 	p := Player{Name: name, Uid: uid}
 	p.ReviewGiven = false
 	p.SongSubmitted = false

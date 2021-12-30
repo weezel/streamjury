@@ -4,15 +4,20 @@
 <title>Levyraati 666</title>
 </head>
 <body>
-    <h1>Here comes the fuckin' sun</h1>
-    <pre>
+    <h1>Levyralli vol. {{ .StartedAt }}</h1>
     {{ range .Players }}
-        {{ .Name }} - {{ .Song.Url }}
-        {{ .Song.Description }}
-        # Reviews:
-        {{ range .ReceivedReviews }}
-            {{ .FromPlayer }} {{ .Rating }}/10: {{ .UserReview }}
+    <p>
+        <b>Esittäjä:</b> {{ .Name }} <br />
+        <b>Kappale:</b> {{ .Song.Url }}  <br />
+        <b>Kuvaus:</b> {{ .Song.Description }}  <br />
+
+        <b>Arviot:</b> <br />
+        {{ range .ReceivedReviews }}  <br />
+        <b>Arvioija:</b> {{ .FromPlayer }}  <br />
+        <b>Pisteet:</b> {{ .Rating }}/10  <br />
+        <b>Arvio kappaleesta:</b> {{ .UserReview }}  <br />
         {{ end }}
+    </p>
     {{ end }}
     </pre>
 </body>

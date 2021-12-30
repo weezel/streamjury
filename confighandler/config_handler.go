@@ -7,7 +7,7 @@ import (
 )
 
 type StreamjuryConfig struct {
-	SuperUserId    int
+	SuperUserId    int64
 	ChannelId      int64
 	ApiKey         string
 	ResultsAbsPath string

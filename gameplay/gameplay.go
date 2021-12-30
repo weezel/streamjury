@@ -1,8 +1,8 @@
 package gameplay
 
 import (
+	"bytes"
 	"html/template"
-	"io"
 	"log"
 	"math/rand"
 	"time"
@@ -14,13 +14,13 @@ const (
 
 type GamePlay struct {
 	// TODO won't be needed sync.Mutex
-	StartedAt        time.Time
-	GameStarterUID   int
-	CurrentPresenter *Player
-	Players          []Player
+	StartedAt        time.Time `json:"time"`
+	GameStarterUID   int64     `json:"game_starter_uid"`
+	CurrentPresenter *Player   `json:"curren_presenter"`
+	Players          []Player  `json:"players"`
 }
 
-func (gameplay GamePlay) IsInGame(userId int) bool {
+func (gameplay GamePlay) IsInGame(userId int64) bool {
 	for _, player := range gameplay.Players {
 		if player.Uid == userId {
 			return true
@@ -95,15 +95,17 @@ func (g *GamePlay) NextSongFrom() *Player {
 	return nil
 }
 
-func (g *GamePlay) PublishResults(outWriter io.Writer) {
+func (g *GamePlay) PublishResults() []byte {
 	check := func(err error) {
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 	var tpl *template.Template
+	var buf bytes.Buffer
 	tpl = template.Must(template.ParseFiles("resources/round.gohtml"))
-	err := tpl.Execute(outWriter, g)
+	err := tpl.Execute(&buf, g)
 	check(err)
-	// return tpl
+
+	return buf.Bytes()
 }

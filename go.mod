@@ -1,11 +1,16 @@
 module streamjury
 
-go 1.13
+go 1.17
 
 require (
-	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
-	github.com/pelletier/go-toml v1.7.0
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/pelletier/go-toml v1.9.4
 	github.com/stretchr/testify v1.5.1
-	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
-	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

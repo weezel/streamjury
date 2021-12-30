@@ -7,14 +7,14 @@ import (
 	"streamjury/gameplay"
 	"strings"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var (
 	game              gameplay.GamePlay
 	currentGameState  gameplay.GameState = gameplay.InitState
 	curSongFrom       *gameplay.Player
-	superUserId       int
+	superUserId       int64
 	channelId         int64
 	telegramApiKey    string
 	resultsAbsPath    string
@@ -52,8 +52,7 @@ func ConnectionHandler() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	updates, err := bot.GetUpdatesChan(u)
-
+	updates := bot.GetUpdatesChan(u)
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
