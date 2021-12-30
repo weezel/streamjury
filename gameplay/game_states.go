@@ -1,33 +1,38 @@
 package gameplay
 
+type GameState int
+
 const (
-	InitState         = iota // 0
-	WaitingForPlayers = iota // 1
-	WaitingForSongs   = iota // 2
-	PublishingSong    = iota // 3
-	WaitingForReviews = iota // 4
-	StopGame          = iota // 5
+	InitState         GameState = iota // 0
+	WaitingForPlayers GameState = iota // 1
+	WaitingForSongs   GameState = iota // 2
+	PublishingSong    GameState = iota // 3
+	WaitingForReviews GameState = iota // 4
+	StopGame          GameState = iota // 5
 )
 
-func NextGameState(gameState *int) {
-	switch *gameState {
+func NextGameState(gameState GameState) GameState {
+	switch gameState {
 	case InitState:
-		*gameState = WaitingForPlayers
+		return WaitingForPlayers
 	case WaitingForPlayers:
-		*gameState = WaitingForSongs
+		return WaitingForSongs
 	case WaitingForSongs:
-		*gameState = PublishingSong
+		return PublishingSong
 	case PublishingSong:
-		*gameState = WaitingForReviews
+		return WaitingForReviews
 	case WaitingForReviews:
-		*gameState = StopGame
+		return StopGame
 	case StopGame:
-		*gameState = InitState
+		return InitState
 	}
+	return StopGame
 }
 
-func IsCommandFeasibleInState(currentStatee int, command string) bool {
-	switch currentStatee {
+// IsCommandFeasibleInState function returns boolean whether
+// a given command is valid on a current state.
+func IsCommandFeasibleInState(currentState GameState, command string) bool {
+	switch currentState {
 	case InitState:
 		if command == "aloita" {
 			return true
@@ -53,7 +58,7 @@ func IsCommandFeasibleInState(currentStatee int, command string) bool {
 	return false
 }
 
-func GetGameStateIntro(gameState int) string {
+func GetGameStateIntro(gameState GameState) string {
 	switch gameState {
 	case InitState:
 		return ""
