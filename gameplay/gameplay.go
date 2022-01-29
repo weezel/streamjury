@@ -103,7 +103,7 @@ func (g *GamePlay) PublishResults() []byte {
 	}
 	var tpl *template.Template
 	var buf bytes.Buffer
-	tpl = template.Must(template.ParseFiles("resources/round.gohtml"))
+	tpl = template.Must(template.ParseFiles("../resources/round.html"))
 	err := tpl.Execute(&buf, g)
 	check(err)
 
