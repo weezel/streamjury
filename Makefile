@@ -1,15 +1,18 @@
-# CGO_ENABLED=0 == static by default
 GO		= go
 # -s removes symbol table and -ldflags -w debugging symbols
 LDFLAGS		= -trimpath -ldflags "-s -w"
 GOOS		= linux
 GOARCH		= amd64
 
-.PHONY: all analysis obsd test
+.PHONY: all clean analysis obsd test
 
 # Defaults Linux
-all: linst
-	CGO_ENABLED=0 $(GO) build $(LDFLAGS)
+all: build
+
+build:
+	CGO_ENABLED=0 GOARCH=$(GOARCH) GOOS=$(GOOS) \
+		$(GO) build $(LDFLAGS)
+
 lint:
 	gosec ./...
 	staticcheck ./...
