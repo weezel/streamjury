@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"streamjury/gameplay"
+	"streamjury/outputs"
 	"strings"
 	"time"
 
@@ -361,7 +362,10 @@ func handlePublishResults(gamePlay gameplay.GamePlay) {
 	dateTimeNow := time.Now().Format("2006-01-02_150405")
 	reviewsFilename := fmt.Sprintf("gameplay-%s.html", dateTimeNow)
 	reviewsFullPath := filepath.Join(resultsAbsPath, reviewsFilename)
-	htmlData := game.PublishResults()
+	htmlData, err := outputs.PublishResultsInHTML(gamePlay)
+	if err != nil {
+		check(err)
+	}
 	err = ioutil.WriteFile(
 		reviewsFullPath,
 		htmlData,

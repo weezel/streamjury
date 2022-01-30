@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" content="html/text" />
+<title>Levyraati 666</title>
+<style>
+body {
+    background-color: rgb(58, 58, 58);
+}
+div {
+   margin: auto;
+   padding: 10px;
+   width: 90%; 
+   border: 2px solid;
+   border-color: #b7b7b75e;
+}
+div > div {
+    border-color: rgba(77, 83, 88, 0.86);
+}
+h1 {
+    color: lightsteelblue;
+}
+h3 {
+    color: rgb(156, 190, 227);
+}
+b {
+    color: rgb(80, 110, 150);
+}
+text {
+    padding-left: 7px;
+    color: #c5d9f9;
+}
+</style>
+</head>
+<body>
+    <h1>Levyralli vol. {{ .StartedAt }}</h1>
+    <b>Mukana pelaamassa:</b>
+    <text>
+    {{- range .Players }}
+    {{- printf "%s " .Name }}
+    {{- end }}</text>
+
+    {{- range .Players }}
+    <p>
+        <div>
+            <b>Esittäjä:</b><text>{{ .Name }}</text><br />
+            <b>Kappale:</b><text>{{ .Song.Url }}</text><br />
+            <b>Kuvaus:</b><text>{{ .Song.Description }}</text><br />
+            <br />
+            <div>
+                <h3>Arviot</h3> 
+                {{- range $i, $r := .ReceivedReviews }}
+                <b>Arvioija:</b><text>{{ $r.FromPlayer }}</text><br />
+                <b>Pisteet:</b><text>{{ $r.Rating }}/10</text><br />
+                <b>Arvio kappaleesta:</b><text>{{ $r.UserReview }}</text><br />
+                {{- end }}
+                <br />
+            </div>
+        </div>
+    </p>
+    {{ end }}
+    </pre>
+</body>
+</html>

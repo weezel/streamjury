@@ -1,9 +1,7 @@
 package gameplay
 
 import (
-	"bytes"
-	"html/template"
-	"log"
+	_ "embed"
 	"math/rand"
 	"time"
 )
@@ -93,19 +91,4 @@ func (g *GamePlay) NextSongFrom() *Player {
 		}
 	}
 	return nil
-}
-
-func (g *GamePlay) PublishResults() []byte {
-	check := func(err error) {
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	var tpl *template.Template
-	var buf bytes.Buffer
-	tpl = template.Must(template.ParseFiles("../resources/round.html"))
-	err := tpl.Execute(&buf, g)
-	check(err)
-
-	return buf.Bytes()
 }

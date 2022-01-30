@@ -2,8 +2,6 @@ package gameplay
 
 import (
 	"math/rand"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -190,90 +188,6 @@ func TestNextSong(t *testing.T) {
 		}
 
 	}
-
-	game = GamePlay{}
-}
-
-func TestPublishResults(t *testing.T) {
-	var game GamePlay
-
-	game.Players = make([]Player, 3)
-
-	// Oh dear I feel dirty
-	pwd, _ := os.Getwd()
-	os.Chdir(filepath.Join(pwd, ".."))
-
-	game.Players[0] = Player{
-		Name: "Todd",
-		Uid:  1,
-		Song: &Song{
-			Url:         "https://mysong.url",
-			Description: "Goodish song but not my favourite",
-		},
-		ReceivedReviews: []Review{
-			Review{
-				FromPlayer: "Nancy",
-				UserReview: "Terrible song",
-				Rating:     5,
-			},
-			Review{
-				FromPlayer: "Alice",
-				UserReview: "Stunning uplift!",
-				Rating:     10,
-			},
-		},
-	}
-
-	game.Players[1] = Player{
-		Name: "Alice",
-		Uid:  2,
-		Song: &Song{
-			Url:         "https://www.youtube.com/my-example-song",
-			Description: "I had to do it.",
-		},
-		ReceivedReviews: []Review{
-			Review{
-				FromPlayer: "Nancy",
-				UserReview: "Oh gosh, why on earth what why oh stop it!",
-				Rating:     1,
-			},
-			Review{
-				FromPlayer: "Todd",
-				UserReview: "I've seen the limits of torture.",
-				Rating:     2,
-			},
-		},
-	}
-
-	game.Players[2] = Player{
-		Name: "Nancy",
-		Uid:  3,
-		Song: &Song{
-			Url:         "https://www.vimeo.com/ambient-madness",
-			Description: "Calm down and enjoy. Close your eyes and feel the breeze.",
-		},
-		ReceivedReviews: []Review{
-			Review{
-				FromPlayer: "Tood",
-				UserReview: "I can smell the summer, it's here!",
-				Rating:     8,
-			},
-			Review{
-				FromPlayer: "Alice",
-				UserReview: "Not my piece of cake but I i still enjoyed it.",
-				Rating:     7,
-			},
-		},
-	}
-	// check := func(err error) {
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
-	// var stringWriter bytes.Buffer
-	// game.PublishResults(&stringWriter)
-	// err := ioutil.WriteFile("mytest.dump", stringWriter.Bytes(), 0644)
-	// check(err)
 
 	game = GamePlay{}
 }
