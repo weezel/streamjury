@@ -148,6 +148,7 @@ func TestNextSong(t *testing.T) {
 	var game GamePlay
 
 	game.Players = make([]Player, 3)
+
 	game.Players[0] = Player{
 		Name: "Todd",
 		Uid:  1,
@@ -172,8 +173,10 @@ func TestNextSong(t *testing.T) {
 
 	game.ShufflePlayingOrder()
 
+	// This is purposely duplicate. If two our of three has presented
+	// their songs, only ony must be left after that.
+	game.NextSongFrom()
 	nextSongFrom := game.NextSongFrom()
-	nextSongFrom = game.NextSongFrom()
 
 	for i, p := range game.Players {
 		t.Logf("%s %s - %s\n",

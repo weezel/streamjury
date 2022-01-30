@@ -41,10 +41,7 @@ func ConnectionHandler() {
 	}
 
 	bot.Debug = func() bool {
-		if strings.ToLower(os.Getenv("DEBUG")) == "true" {
-			return true
-		}
-		return false
+		return strings.ToLower(os.Getenv("DEBUG")) == "true"
 	}()
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
@@ -104,6 +101,7 @@ func ConnectionHandler() {
 				command)
 			continue
 		}
+
 		// Someone initiated the command while not joined in game?
 		var playerIsInTheGame bool = false
 		for _, p := range game.Players {
