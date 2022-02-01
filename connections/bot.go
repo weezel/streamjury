@@ -122,7 +122,7 @@ func ConnectionHandler() {
 		case "esitä", "esitys":
 			currentGameState = handleSubmittedSong(
 				bot,
-				player,
+				player.Uid,
 				update.Message.Chat.ID,
 				currentGameState,
 				splitted)

@@ -247,7 +247,7 @@ func handleReview(
 
 func handleSubmittedSong(
 	bot *tgbotapi.BotAPI,
-	player *gameplay.Player,
+	playerID int64,
 	chatID int64,
 	curGameState gameplay.GameState,
 	review []string,
@@ -269,31 +269,21 @@ func handleSubmittedSong(
 	// Get song description
 	description := getSongDescription(review)
 
-	var playerFound bool = false
-	var i int
-	var p gameplay.Player
-	for range game.Players {
+	var player *gameplay.Player
+	for i, p := range game.Players {
 		// Correct player found
-		if player.Uid == p.Uid {
-			playerFound = true
+		if playerID == p.Uid {
+			player = &game.Players[i]
 			break
 		}
-		i++
-		if i < len(game.Players) {
-			p = game.Players[i]
-		}
-	}
-	if playerFound == false {
-		// TODO
-		return curGameState
 	}
 
 	// Song already submitted, bail out
-	if p.Song != nil {
+	if player.Song != nil {
 		log.Printf("Player %s tried to send a new song: %s\n",
-			p.Name, songUrl.String())
+			player.Name, songUrl.String())
 		replyMsg = fmt.Sprintf("Olet jo lähettänyt kappaleen: %s",
-			p.Song.Url)
+			player.Song.Url)
 		msg := tgbotapi.NewMessage(chatID, replyMsg)
 		if _, err = bot.Send(msg); err != nil {
 			log.Printf("ERROR (handlePresent1): %+v", err)
@@ -301,10 +291,10 @@ func handleSubmittedSong(
 		return curGameState
 	}
 
-	game.Players[i].SongSubmitted = true
-	game.Players[i].AddSong(description, songUrl.String())
+	player.SongSubmitted = true
+	player.AddSong(description, songUrl.String())
 	log.Printf("Player %s added song %s with description: %s\n",
-		p.Name,
+		player.Name,
 		songUrl.String(),
 		description)
 	log.Printf("%+v\n", game.Players)
@@ -347,6 +337,7 @@ func handleSubmittedSong(
 
 func handlePublishResults(gamePlay gameplay.GamePlay) {
 	if allSongsPresented == false {
+		log.Print("not all the songs were submitted")
 		return
 	}
 
