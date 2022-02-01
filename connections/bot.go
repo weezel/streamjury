@@ -93,13 +93,8 @@ func ConnectionHandler() {
 		}
 
 		// Someone initiated the command while not joined in game?
-		var playerIsInTheGame bool = false
-		for _, p := range game.Players {
-			if player.Uid == p.Uid {
-				playerIsInTheGame = true
-			}
-		}
-		if playerIsInTheGame == false &&
+		playerIsInTheGame := isPlayerInTheGame(player)
+		if !playerIsInTheGame &&
 			currentGameState > gameplay.WaitingForPlayers {
 			log.Printf("Player %s(%d) initiated esitys without being in the game",
 				player.Name,
@@ -171,4 +166,13 @@ func ConnectionHandler() {
 			currentGameState = handleQuit(game)
 		} // for update
 	}
+}
+
+func isPlayerInTheGame(player *gameplay.Player) bool {
+	for _, p := range game.Players {
+		if player.Uid == p.Uid {
+			return true
+		}
+	}
+	return false
 }
