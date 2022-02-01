@@ -55,16 +55,6 @@ func ConnectionHandler() {
 			continue
 		}
 
-		if !game.StartedAt.IsZero() {
-			timedOut, timeInIdle := game.HasIdleTimedOut()
-			if timedOut {
-				log.Printf("Timeout reached: %+v", timeInIdle)
-			} else {
-				log.Printf("Currently idled: %+v / %+v", timeInIdle,
-					gameplay.GameIdleTimeout)
-			}
-		}
-
 		splitted := strings.Split(update.Message.Text, " ")
 		if len(splitted) < 2 {
 			continue
