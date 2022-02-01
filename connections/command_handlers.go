@@ -36,6 +36,7 @@ func handleBegin(bot BotIF, player *gameplay.Player) gameplay.GameState {
 	} else {
 		// Game starter has super powers
 		if len(game.Players) == 0 {
+			game.StartedAt = time.Now()
 			game.GameStarterUID = player.Uid
 			replyMsg = fmt.Sprintf("%s haluaa aloittaa levyraadin, "+
 				"odotetaan muita pelaajia. "+
@@ -55,28 +56,25 @@ func handleBegin(bot BotIF, player *gameplay.Player) gameplay.GameState {
 				log.Printf("ERROR (handleBegin3): %+v", err)
 			}
 
-			// Show joined players
-			joinedPlayers := func() []string {
-				names := make([]string, len(game.Players))
-				for i, p := range game.Players {
-					names[i] = p.Name
-				}
-				return names
-			}
-			replyMsg = fmt.Sprintf("Tähän mennessä liittyneet: %s",
-				strings.Join(joinedPlayers(), ", "))
-			outMsg = tgbotapi.NewMessage(channelId, replyMsg)
-			if _, err = bot.Send(outMsg); err != nil {
-				log.Printf("ERROR (handleBegin4): %+v", err)
-			}
 		}
+
 		game.AppendPlayer(player)
+		// Show joined players
+		joinedPlayers := func() []string {
+			names := make([]string, len(game.Players))
+			for i, p := range game.Players {
+				names[i] = p.Name
+			}
+			return names
+		}
+		replyMsg = fmt.Sprintf("Tähän mennessä liittyneet: %s",
+			strings.Join(joinedPlayers(), ", "))
+		outMsg = tgbotapi.NewMessage(channelId, replyMsg)
+		if _, err = bot.Send(outMsg); err != nil {
+			log.Printf("ERROR (handleBegin4): %+v", err)
+		}
 		log.Printf("Player %s(%d) joined", player.Name, player.Uid)
 		log.Printf("Joined players: %+v\n", game.Players)
-	}
-
-	if game.StartedAt.IsZero() {
-		game.StartedAt = time.Now()
 	}
 
 	return gameplay.WaitingForPlayers
