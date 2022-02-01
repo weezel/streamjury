@@ -72,7 +72,7 @@ func ConnectionHandler() {
 		} else {
 			playerName = update.Message.From.UserName
 		}
-		player := gameplay.AddPlayer(
+		player := gameplay.CreatePlayer(
 			playerName,
 			update.Message.From.ID,
 		)

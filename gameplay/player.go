@@ -29,7 +29,7 @@ type Review struct {
 	UserReview string `json:"user_review"`
 }
 
-func AddPlayer(name string, uid int64) *Player {
+func CreatePlayer(name string, uid int64) *Player {
 	p := Player{Name: name, Uid: uid}
 	p.ReviewGiven = false
 	p.SongSubmitted = false
