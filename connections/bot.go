@@ -84,7 +84,7 @@ func ConnectionHandler() {
 
 		// Only certain commands are feasible in certains states
 		var command string = strings.ToLower(splitted[1])
-		if gameplay.IsCommandFeasibleInState(currentGameState, command) == false {
+		if !gameplay.IsCommandFeasibleInState(currentGameState, command) {
 			log.Printf("Player %s(%d) initiated command '%s' in wrong state",
 				player.Name,
 				player.Uid,
